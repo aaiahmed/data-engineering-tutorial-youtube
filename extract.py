@@ -46,6 +46,7 @@ def write_csv(df: pd.DataFrame, file_path: str):
 
 def load_table(con: Engine, table: str, file_path: str):
     df = pd.read_csv(filepath_or_buffer=file_path, sep=',')
+    df.columns = df.columns.str.lower()
     df.to_sql(con=con, name=table, if_exists="replace", index=False)
 
 
@@ -63,11 +64,10 @@ def extract_and_load_all_tables(source: str, target: str):
 
     for table in source_tables:
         df = extract_table(con=source_connection, schema=source_schema, table=table)
-        file_path = f"{file_directory}/{table}.csv"
+        file_path = f"{file_directory}/{table.strip()}.csv"
         write_csv(df=df, file_path=file_path)
-        load_table(con=target_connection, table=table, file_path=file_path)
+        load_table(con=target_connection, table=table.strip(), file_path=file_path)
 
 
 if __name__ == '__main__':
-    extract_and_load_all_tables(source='sqlserver', target='postgresql')
     extract_and_load_all_tables(source='mysql', target='postgresql')
