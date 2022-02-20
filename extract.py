@@ -3,13 +3,22 @@
 from configparser import ConfigParser
 from sqlalchemy.engine.base import Engine
 from sqlalchemy import create_engine
+from airflow.models import Variable
 from operator import itemgetter
-import os
 import pandas as pd
+import logging
+import os
+
 
 EXTRACT_LOCATION = "extracted_files"
 CONFIG_FILE = "config.ini"
-PASSWORD = os.getenv('PASSWORD')
+
+
+def get_password() -> str:
+    password = os.getenv('PASSWORD')
+    if password is None:
+        return Variable.get('password')
+    return password
 
 
 def read_config() -> ConfigParser:
@@ -25,7 +34,7 @@ def get_section_config(config: ConfigParser, section: str) -> dict:
 def get_connection(config: dict) -> Engine:
     host, port, user, db, dbtype, library, driver = \
         itemgetter('host', 'port', 'user', 'db', 'dbtype', 'library', 'driver')(config)
-    connection_uri = f"{dbtype}+{library}://{user}:{PASSWORD}@{host}:{port}/{db}{driver}"
+    connection_uri = f"{dbtype}+{library}://{user}:{get_password()}@{host}:{port}/{db}{driver}"
     return create_engine(connection_uri)
 
 
@@ -69,5 +78,16 @@ def extract_and_load_all_tables(source: str, target: str):
         load_table(con=target_connection, table=table.strip(), file_path=file_path)
 
 
-if __name__ == '__main__':
+def extract_tables_from_mysql():
+    logging.info("Extracting data from mysql into postgresql")
     extract_and_load_all_tables(source='mysql', target='postgresql')
+
+
+def extract_tables_from_sqlserver():
+    logging.info("Extracting data from sqlserver into postgresql")
+    extract_and_load_all_tables(source='sqlserver', target='postgresql')
+
+
+if __name__ == '__main__':
+    extract_tables_from_mysql()
+    extract_tables_from_sqlserver()
