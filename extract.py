@@ -11,7 +11,7 @@ import os
 
 
 EXTRACT_LOCATION = "extracted_files"
-CONFIG_FILE = "config.ini"
+CONFIG_FILE = "/home/aahmed/code/data-engineering-tutorial-youtube/config.ini"
 
 
 def get_password() -> str:
@@ -80,6 +80,7 @@ def extract_and_load_all_tables(source: str, target: str):
 
 def extract_tables_from_mysql():
     logging.info("Extracting data from mysql into postgresql")
+    logging.info(os.getcwd())
     extract_and_load_all_tables(source='mysql', target='postgresql')
 
 
